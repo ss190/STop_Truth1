@@ -3,6 +3,7 @@
 #include <EventLoop/Worker.h>
 #include <MyAnalysis/TruthxAODAnalysis_STop.h>
 #include <MyAnalysis/Util.h>
+#include <TString.h>
 
 #include "xAODRootAccess/tools/Message.h"
 
@@ -48,9 +49,34 @@ EL::StatusCode TruthxAODAnalysis_STop :: histInitialize ()
   // trees.  This method gets called before any input files are
   // connected.
 
+  /*
+  file_fullME = new TFile("/n/atlasfs/atlascode/backedup/ssun/STop_Truth4/MyAnalysis/Root/hist-FullME.bWN.250_130.root");
+  h_bw_fullME = (TH1F*) file_fullME->Get("h_stop1_b_w_mass_0cut");
+
+  file_pythia = new TFile("/n/atlasfs/atlascode/backedup/ssun/STop_Truth4/MyAnalysis/Root/hist-pythia.bWN.250-130.root");
+  h_bw_pythia =(TH1F*) file_pythia->Get("h_stop1_b_w_mass_0cut");
+  */
+
+  file_fullME = new TFile("/n/atlasfs/atlascode/backedup/ssun/STop_Truth4/MyAnalysis/Root/bWN_reweight_met0.root");
+
+  //  h_bw_fullME->Scale(1.0/h_bw_fullME->Integral());
+  //  h_bw_pythia->Scale(1.0/h_bw_pythia->Integral());
+
+  //h_bw_weight = (TH1F*) h_bw_fullME->Clone( "h_bw_weight" );
+  //h_bw_weight->Divide(h_bw_pythia);
+
   if (verbose) std::cout << "In histInitialize " << std::endl;
   h_top_pt = new TH1F("h_top_pt","Top quark pt",200, 0.0, 400.);  // Intialize the top pt histogram
   wk()->addOutput (h_top_pt);
+  h_True_Weight = new TH1F("h_True_Weight","h_True_Weight",200,0.0,10.0);
+  wk()->addOutput(h_True_Weight);
+  h_True_Weight2 = new TH1F("h_True_Weight2","h_True_Weight2",200,0.0,10.0);
+  wk()->addOutput(h_True_Weight2);
+
+  h_stop_top_mass_2D_Weighted = new TH2F("h_stop_top_mass_2D_Weighted","h_stop_top_mass_2D_Weighted", 50, 80.0, 120., 50, 80.0, 120.);
+  h_stop_top_mass_2D          = new TH2F("h_stop_top_mass_2D"         ,"h_stop_top_mass_2D",          50, 80.0, 120., 50, 80.0, 120.);
+  wk()->addOutput(h_stop_top_mass_2D_Weighted);
+  wk()->addOutput(h_stop_top_mass_2D);
 
   TString name;
 
@@ -61,6 +87,10 @@ EL::StatusCode TruthxAODAnalysis_STop :: histInitialize ()
     ssi << i;
     std::string istr = ssi.str();
   
+    name = "h_stop_decay_mode_"+istr+"cut";
+    h_stop_decay_mode[i] = new TH1F(name.Data(),name.Data(),4,-0.5,3.5);
+    wk()->addOutput(h_stop_decay_mode[i]);
+
     name = "h_stop1_w_jets_eta_"+istr+"cut";
     h_stop1_w_jets_eta[i] = new TH1F(name.Data(),name.Data(),200,-3.0,3.0);
     wk()->addOutput(h_stop1_w_jets_eta[i]);
@@ -80,11 +110,11 @@ EL::StatusCode TruthxAODAnalysis_STop :: histInitialize ()
     name = "h_dixi_mass_"+istr+"cut";
     h_dixi_mass[i] = new TH1F(name.Data(),name.Data(),200,0.,700.);
     wk()->addOutput(h_dixi_mass[i]);
-    name = "h_stop1_b_w_mass_"+istr+"cut";
-    h_stop1_b_w_mass[i] = new TH1F(name.Data(),name.Data(),200,150.0,175.);
+    name = "h_stop1_b_w_mass_weighted_"+istr+"cut";
+    h_stop1_b_w_mass[i] = new TH1F(name.Data(),name.Data(),200,80.0,175.);
     wk()->addOutput(h_stop1_b_w_mass[i]);
     name = "h_stop2_b_w_mass_"+istr+"cut";
-    h_stop2_b_w_mass[i] = new TH1F(name.Data(),name.Data(),200,150.0,175.);
+    h_stop2_b_w_mass[i] = new TH1F(name.Data(),name.Data(),200,80.0,175.);
     wk()->addOutput(h_stop2_b_w_mass[i]);
     name = "h_stop1_pt_"+istr+"cut";
     h_stop1_pt[i] = new TH1F(name.Data(),name.Data(),200,0.0,700.);
@@ -159,6 +189,10 @@ EL::StatusCode TruthxAODAnalysis_STop :: histInitialize ()
     name = "h_dixi_pthrust_"+istr+"cut";
     h_dixi_pthrust[i] = new TH1F(name.Data(),name.Data(),200,-700.,700.);
     wk()->addOutput(h_dixi_pthrust[i]);
+
+    name = "h_met_"+istr+"cut";
+    h_met[i] = new TH1F(name.Data(),name.Data(),200,0.0,700.);
+    wk()->addOutput(h_met[i]);
 
     name = "h_stop1_jets_pt_thrust_"+istr+"cut";
     h_stop1_jets_pt_thrust[i] = new TH1F(name.Data(),name.Data(),200,-700.,700.);
@@ -266,6 +300,32 @@ EL::StatusCode TruthxAODAnalysis_STop :: histInitialize ()
     name = "h_2ISR_Met_ISR_b_MaxMass_"+istr+"cut";
     h_2ISR_Met_ISR_b_MaxMass[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
 
+    name = "h_ISR_pt_Met_"+istr+"cut";
+    h_ISR_pt_Met[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+
+    name = "h_RecoISR_Pt_"+istr+"cut";
+    h_RecoISR_Pt[i] = new TH1F(name.Data(),name.Data(),400,-1000.0,1000.0);
+    name = "h_RecoISR_PAlongThrust_"+istr+"cut";
+    h_RecoISR_PAlongThrust[i] = new TH1F(name.Data(),name.Data(),400,-1000.0,1000.0);
+    name = "h_RecoISR_pt_distop_pt_"+istr+"cut";
+    h_RecoISR_pt_distop_pt[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_pt_Met_"+istr+"cut";
+    h_RecoISR_pt_Met[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_PAlongThrust_Met_"+istr+"cut";
+    h_RecoISR_PAlongThrust_Met[i] = new TH2F(name.Data(),name.Data(),100,-1000.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_pt_tt_pt_"+istr+"cut";
+    h_RecoISR_pt_tt_pt[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_b_MinMass_"+istr+"cut";
+    h_RecoISR_pt_ISR_b_MinMass[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_b_MaxMass_"+istr+"cut";
+    h_RecoISR_pt_ISR_b_MaxMass[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_Met_ISR_b_MinMass_"+istr+"cut";
+    h_RecoISR_Met_ISR_b_MinMass[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+    name = "h_RecoISR_Met_ISR_b_MaxMass_"+istr+"cut";
+    h_RecoISR_Met_ISR_b_MaxMass[i] = new TH2F(name.Data(),name.Data(),100,0.0,1000., 100, 0.0, 1000.);
+
+    wk()->addOutput(h_ISR_pt_Met[i]);
+
     wk()->addOutput(h_1ISR_totalPt[i]);
 
     wk()->addOutput(h_1ISR_jetPt[i]);
@@ -299,6 +359,17 @@ EL::StatusCode TruthxAODAnalysis_STop :: histInitialize ()
     wk()->addOutput(h_2ISR_pt_ISR_b_MaxMass[i]);
     wk()->addOutput(h_2ISR_Met_ISR_b_MinMass[i]);
     wk()->addOutput(h_2ISR_Met_ISR_b_MaxMass[i]);
+
+    wk()->addOutput(h_RecoISR_Pt[i]);
+    wk()->addOutput(h_RecoISR_PAlongThrust[i]);
+    wk()->addOutput(h_RecoISR_pt_distop_pt[i]);
+    wk()->addOutput(h_RecoISR_pt_Met[i]);
+    wk()->addOutput(h_RecoISR_PAlongThrust_Met[i]);
+    wk()->addOutput(h_RecoISR_pt_tt_pt[i]);
+    wk()->addOutput(h_RecoISR_pt_ISR_b_MinMass[i]);
+    wk()->addOutput(h_RecoISR_pt_ISR_b_MaxMass[i]);
+    wk()->addOutput(h_RecoISR_Met_ISR_b_MinMass[i]);
+    wk()->addOutput(h_RecoISR_Met_ISR_b_MaxMass[i]);
 
     name = "h_delr_b1_w1_"+istr+"cut";
     h_delr_b1_w1[i] = new TH1F(name.Data(),name.Data(),400, 0.0, 5.0);
@@ -906,6 +977,7 @@ void TruthxAODAnalysis_STop::DrawEvtDisplay(){
 EL::StatusCode TruthxAODAnalysis_STop :: execute ()
 {
   if ( verbose ) std::cout << std::endl;
+  if ( verbose ) std::cout << "new evt" << std::endl;
 
   // Here you do everything that needs to be done on every single
   // events, e.g. read input variables, apply cuts, and fill
@@ -950,10 +1022,11 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
   const xAOD::TruthParticleContainer* TruthParticleCont = 0;
   EL_RETURN_CHECK("execute()",event->retrieve(TruthParticleCont, "TruthParticles"));
 
-  double reweight1 = polreweight->getReweightTopNeutralino(TruthParticleCont, 1.40639, TMath::Pi()/4.);
+  double reweight2 = polreweight->getReweightTopNeutralino(TruthParticleCont, 1.40639, TMath::Pi()/4.);
+  double reweight1 = 1.0;
   //  double reweight1 = 1.0;
 
-  if ( verbose ) std::cout << "weight " << reweight1 << std::endl;
+  //  std::cout << "weight " << reweight1 << std::endl;
 
   //--------------------------------------------------------------//
   //             Loop over all saved truth particles              //
@@ -983,8 +1056,8 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
   thrust_vec.SetXYZT(0,0,0,0);
   thrust_perp_vec.SetXYZT(0,0,0,0);
 
-  isStop1Had = false;
-  isStop2Had = false;
+  isStop1Had = -1;
+  isStop2Had = -1;
   plotEvent = false;
 
   //--------------------------------------------------------//
@@ -1106,6 +1179,8 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
 	  pdgId = particle->pdgId();
 	  status = particle->status();
 
+	  if ( verbose ) std::cout << "The stop decay vertex, id of particle " << j << " of stop1 prodvtx is " << pdgId << std::endl;
+
 	  //-------------------------------------------//
 	  //      Find Decay Products of STop          //
 	  //-------------------------------------------//
@@ -1178,6 +1253,8 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
 
   //  if (!isStop1Had || !isStop2Had) { return EL::StatusCode::SUCCESS; }
 
+  if ( isStop1Had <= -1 || isStop2Had <= -1 ) std::cout << "wtfff stop not reconstructed" << std::endl;
+
   //-------------------------------------------------//
   //             Find Direction of Thrust            //
   //-------------------------------------------------//
@@ -1202,12 +1279,19 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
 
   dixi = stop1_xi + stop2_xi;
 
+  //  std::cout << (stop1_t+stop1_xi).M() << " " << stop1_xi.M() << " " 
+  //	    << (stop2_t+stop2_xi).M() << " " << stop2_xi.M() << std::endl;
+
+  MET_TLV = dixi;
+  if ( !(isStop1Had==0) ) MET_TLV+=stop1_wj2;
+  if ( !(isStop2Had==0) ) MET_TLV+=stop2_wj2;
+
   //  if ( dixi.Pt() < 250. ) { return EL::StatusCode::SUCCESS; }
 
   if ( verbose ) std::cout << "di top P " << ditop.P() << " M " << ditop.M() << std::endl;
   if ( verbose ) std::cout << " +ISR P " <<  total.P() << " M " << total.M() << std::endl;
 
-  if (!isStop1Had || !isStop2Had) { return EL::StatusCode::SUCCESS; }     
+  if ( !(isStop1Had==0) || !(isStop2Had==0) ) { return EL::StatusCode::SUCCESS; }     
 
   FindThrustDir();
 
@@ -1267,7 +1351,34 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
   stop2_jets = stop2_b + stop2_wj1 + stop2_wj2;
   stop1_w = stop1_wj1 + stop1_wj2;
   stop2_w = stop2_wj1 + stop2_wj2;
-  
+
+  std::stringstream ssi;
+  ssi << eventInfo->runNumber();
+  std::string istr = ssi.str();
+
+  TString name = istr+"_bWN_massReweightFactor";
+
+  h_bw_weight = (TH1F*) file_fullME->Get(name.Data());
+
+  reweight1 *= h_bw_weight->Interpolate(stop1_jets.M());
+  reweight1 *= h_bw_weight->Interpolate(stop2_jets.M());
+
+  h_True_Weight->Fill(reweight1);
+  h_True_Weight2->Fill(reweight2);  
+  h_stop_top_mass_2D_Weighted->Fill(stop1_jets.M(), stop2_jets.M(), reweight1);
+  h_stop_top_mass_2D->Fill(stop1_jets.M(), stop2_jets.M());
+
+  h_stop2_b_w_mass[0]->Fill(stop1_jets.M());
+  h_stop2_b_w_mass[0]->Fill(stop2_jets.M());
+
+  h_stop1_b_w_mass[0]->Fill(stop1_jets.M(), reweight1);
+  h_stop1_b_w_mass[0]->Fill(stop2_jets.M(), reweight1);
+
+  h_stop1_b_w_mass[1]->Fill(stop1_jets.M(), reweight2);
+  h_stop1_b_w_mass[1]->Fill(stop2_jets.M(), reweight2);
+
+  return EL::StatusCode::SUCCESS; // cut off for now
+
   AllJets_Vec.resize(0);
   AllJets_Lost.resize(0);
   AllJets_Vec.push_back(stop1_b);
@@ -1511,7 +1622,7 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
   TCand_LabFrame2_MaxPThrust.Boost(TTVect.BoostVector());
 
   //--------------------------------------------------//
-
+  //         Get Reconstructed Variables              //
   //--------------------------------------------------//
 
   plotEvent = true;
@@ -1520,7 +1631,7 @@ EL::StatusCode TruthxAODAnalysis_STop :: execute ()
     if (verbose) std::cout << "Plotting cut 0 plots" << std::endl;
     plot_signal(0, reweight1);
 
-    if (dixi.Pt()>=200.){
+    if (MET_TLV.Pt()>=60.){
       if ( count < 500 ) DrawEvtDisplay();
       count++;
       plot_signal(1, reweight1);
@@ -1681,12 +1792,12 @@ double TruthxAODAnalysis_STop::CalculatePAlongThrust( double px, double py ) {
   return px*thrust_vec.Px() + py*thrust_vec.Py();
 }
 
-bool TruthxAODAnalysis_STop::Find_STopDecayProducts( const xAOD::TruthParticle* particle, 
+int TruthxAODAnalysis_STop::Find_STopDecayProducts( const xAOD::TruthParticle* particle, 
 						     TLorentzVector *Top_tmp,
 						     TLorentzVector *Xi_tmp,  TLorentzVector *B_tmp,
 						     TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp ) {
 
-  bool isSTopHad = false;
+  int isSTopHad = -1;
 
   if (verbose) std::cout << "inside stop1 loop (prod)" << std::endl;
 
@@ -1710,11 +1821,27 @@ bool TruthxAODAnalysis_STop::Find_STopDecayProducts( const xAOD::TruthParticle* 
   //---------------------------------------------------------------------------------------//
 
   if (verbose) std::cout << "npart daughter before while is : " << npart_daughter << std::endl;
-  while (npart_daughter <= 1){
+
+  bool foundSTop = false;
+
+  while (!foundSTop){
     particle_daughter = decayVtx_daughter->outgoingParticle(0);
     decayVtx = decayVtx_daughter;
     decayVtx_daughter = particle_daughter->decayVtx();
     npart_daughter = decayVtx_daughter->nOutgoingParticles();
+
+    if ( npart_daughter == 1 ) {
+      foundSTop = false;
+    }
+    else  {
+      foundSTop = true;
+
+      for ( int i=0; i<npart_daughter; i++) {
+	int pdgId = decayVtx_daughter->outgoingParticle(i)->pdgId();
+	if ( abs(pdgId)==1000006 ) foundSTop = false;
+      }
+    }
+
     particle = particle_daughter;
   }
 
@@ -1742,7 +1869,9 @@ bool TruthxAODAnalysis_STop::Find_STopDecayProducts( const xAOD::TruthParticle* 
       const xAOD::TruthParticle* particle = decayVtx->outgoingParticle(j);
       pdgId = particle->pdgId();
       status = particle->status();
-      
+
+      if ( verbose ) std::cout << "The stop to top decay vertex, id of particle " << j << " of stop1 decayvtx is " << pdgId << std::endl;
+
       double px = particle->px()/GeV;
       double py = particle->py()/GeV;
       double pz = particle->pz()/GeV;
@@ -1788,12 +1917,12 @@ bool TruthxAODAnalysis_STop::Find_STopDecayProducts( const xAOD::TruthParticle* 
   return isSTopHad;
 }
 
-bool TruthxAODAnalysis_STop::Find_TopDecayProducts( const xAOD::TruthParticle* particle,
+int TruthxAODAnalysis_STop::Find_TopDecayProducts( const xAOD::TruthParticle* particle,
 						    TLorentzVector *B_tmp,
 						    TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp ) {
 
 
-  bool isSTopHad = false;
+  int isSTopHad = -1;
 
   //---------------------------------------//
   //     Find decay product of Top boson   //
@@ -1866,7 +1995,7 @@ bool TruthxAODAnalysis_STop::Find_TopDecayProducts( const xAOD::TruthParticle* p
 
 }
 
-bool TruthxAODAnalysis_STop::Find_WDecayProducts( const xAOD::TruthParticle* particle, 
+int TruthxAODAnalysis_STop::Find_WDecayProducts( const xAOD::TruthParticle* particle, 
 						  TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp ) {
   
   //---------------------------------------------------//
@@ -1877,7 +2006,7 @@ bool TruthxAODAnalysis_STop::Find_WDecayProducts( const xAOD::TruthParticle* par
   //  Use pointers to pass objects between methods     //
   //---------------------------------------------------//
 
-  bool isSTopHad = false;
+  int isSTopHad = -1;
   
   //---------------------------------------//                                                       
   //     Find decay product of W boson     //                                                       
@@ -1946,9 +2075,34 @@ bool TruthxAODAnalysis_STop::Find_WDecayProducts( const xAOD::TruthParticle* par
 	else {
           if (verbose) std::cout << "inside stop2W first jet loop " << std::endl;
           WJ2_tmp->SetPxPyPzE(wj_px,wj_py,wj_pz,wj_e);
-	  isSTopHad = true;
+	  isSTopHad = 0;
 	}
       }
+      if ((abs(pdgId) == 11) || (abs(pdgId)==13)) {
+        double wj_px = particle->px()/GeV;
+        double wj_py = particle->py()/GeV;
+        double wj_pz = particle->pz()/GeV;
+        double wj_e = particle->e()/GeV;
+	WJ1_tmp->SetPxPyPzE(wj_px,wj_py,wj_pz,wj_e);
+	isSTopHad = 1;
+      }
+      if ( abs(pdgId) == 15 ) {
+        double wj_px = particle->px()/GeV;
+        double wj_py = particle->py()/GeV;
+        double wj_pz = particle->pz()/GeV;
+        double wj_e = particle->e()/GeV;
+        WJ1_tmp->SetPxPyPzE(wj_px,wj_py,wj_pz,wj_e);
+	isSTopHad = 2;
+      } 
+      if ((abs(pdgId) == 12) || (abs(pdgId)==14) || (abs(pdgId)==16)) {
+        double wj_px = particle->px()/GeV;
+        double wj_py = particle->py()/GeV;
+        double wj_pz = particle->pz()/GeV;
+        double wj_e = particle->e()/GeV;
+	WJ2_tmp->SetPxPyPzE(wj_px,wj_py,wj_pz,wj_e);
+      }
+
+      //      std::cout << "w decay product " << pdgId << std::endl;
     }
   }
   else {
@@ -2169,6 +2323,19 @@ void TruthxAODAnalysis_STop::SetVerbose(int i) {
 void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
   //Plot stop stop2 inv mass
   if (verbose) std::cout << "Inside plot_signal, filling distop mass plot" << std::endl;
+
+  if ( isStop1Had == 0 && isStop2Had == 0 ) {
+    h_stop_decay_mode[icut]->Fill(0.0,weight);
+  }
+  else if ( (isStop1Had == 2 && isStop2Had ==0) || (isStop1Had == 0 && isStop2Had ==2) ) {
+    h_stop_decay_mode[icut]->Fill(1.0,weight);
+  }
+  else if ( (isStop1Had == 1 && isStop2Had ==0) || (isStop1Had == 0 && isStop2Had ==1) ) {
+    h_stop_decay_mode[icut]->Fill(2.0,weight);
+  }
+  else if ( isStop1Had != 0 && isStop2Had !=0) {
+    h_stop_decay_mode[icut]->Fill(3.0,weight);
+  }
   h_distop_mass[icut]->Fill(distop.M(), weight);  
   h_distop_pt[icut]->Fill(distop.Pt(), weight);
 
@@ -2191,6 +2358,7 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
   if (verbose) std::cout << "stop_wj1 E is" << stop_wj1.E() << std::endl;
   if (verbose) std::cout << "stop_wj1 pt is" << stop_wj1.Pt() << std::endl;
   */
+
 
   h_stop1_w_jets_eta[icut]->Fill(stop1_wj1.Eta(), weight);
   h_stop1_w_jets_eta[icut]->Fill(stop1_wj2.Eta(), weight);
@@ -2299,6 +2467,7 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
   if ( verbose ) std::cout << "dixi_mass is " << dixi.M() << std::endl;
   h_dixi_mass[icut]->Fill(dixi.M(), weight);
   h_dixi_pt[icut]->Fill(dixi.Pt(), weight);
+  h_met[icut]->Fill(MET_TLV.Pt(), weight);
 
   //Delta Phi between ISR and MET
 
@@ -2325,7 +2494,7 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
     h_noISR_distop_pt[icut]->Fill(distop.Pt(), weight);
   }
 
-  if ( nISR == 1 ) {
+  if ( nISR >= 1 ) {
     h_1ISR_totalPt[icut]->Fill(ISR_total.Pt(), weight);
 
     TLorentzVector ISR_tmp;
@@ -2343,13 +2512,13 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
 
 
       h_1ISR_pt_distop_pt[icut]->Fill(ISR_tmp.Pt(), distop.Pt(), weight);
-      h_1ISR_pt_Met[icut]->Fill(ISR_tmp.Pt(), dixi.Pt(), weight);
-      h_1ISR_PAlongThrust_Met[icut]->Fill(ISR_PAlongThrust, dixi.Pt(), weight);
+      h_1ISR_pt_Met[icut]->Fill(ISR_tmp.Pt(), MET_TLV.Pt(), weight);
+      h_1ISR_PAlongThrust_Met[icut]->Fill(ISR_PAlongThrust, MET_TLV.Pt(), weight);
       h_1ISR_pt_tt_pt[icut]->Fill(ISR_tmp.Pt(), (stop1_jets+stop2_jets).Pt(), weight);
       h_1ISR_pt_ISR_b_MinMass[icut]->Fill(ISR_tmp.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ) , weight);
       h_1ISR_pt_ISR_b_MaxMass[icut]->Fill(ISR_tmp.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ) , weight);
-      h_1ISR_Met_ISR_b_MinMass[icut]->Fill(dixi.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ), weight);
-      h_1ISR_Met_ISR_b_MaxMass[icut]->Fill(dixi.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ), weight);
+      h_1ISR_Met_ISR_b_MinMass[icut]->Fill(MET_TLV.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ), weight);
+      h_1ISR_Met_ISR_b_MaxMass[icut]->Fill(MET_TLV.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ), weight);
 
     }
   }
@@ -2371,27 +2540,68 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
       h_2ISR_PAlongThrust[icut]->Fill(ISR_PAlongThrust, weight);
 
       h_2ISR_pt_distop_pt[icut]->Fill(ISR_tmp.Pt(), distop.Pt(), weight);
-      h_2ISR_pt_Met[icut]->Fill(ISR_tmp.Pt(), dixi.Pt(), weight);
-      h_2ISR_PAlongThrust_Met[icut]->Fill(ISR_PAlongThrust, dixi.Pt(), weight);
+      h_2ISR_pt_Met[icut]->Fill(ISR_tmp.Pt(), MET_TLV.Pt(), weight);
+      h_2ISR_PAlongThrust_Met[icut]->Fill(ISR_PAlongThrust, MET_TLV.Pt(), weight);
       h_2ISR_pt_tt_pt[icut]->Fill(ISR_tmp.Pt(), (stop1_jets+stop2_jets).Pt(), weight);
       h_2ISR_pt_ISR_b_MinMass[icut]->Fill(ISR_tmp.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ) , weight);
       h_2ISR_pt_ISR_b_MaxMass[icut]->Fill(ISR_tmp.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ) , weight);
-      h_2ISR_Met_ISR_b_MinMass[icut]->Fill(dixi.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ), weight);
-      h_2ISR_Met_ISR_b_MaxMass[icut]->Fill(dixi.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ), weight);
+      h_2ISR_Met_ISR_b_MinMass[icut]->Fill(MET_TLV.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ), weight);
+      h_2ISR_Met_ISR_b_MaxMass[icut]->Fill(MET_TLV.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ), weight);
 
-      h_2ISR_pt_distop_pt[icut]->Fill(ISR_tmp.Pt(), distop.Pt(), weight);
-      h_2ISR_pt_Met[icut]->Fill(ISR_tmp.Pt(), dixi.Pt(), weight);
-      h_2ISR_PAlongThrust_Met[icut]->Fill(ISR_PAlongThrust, dixi.Pt(), weight);
-      h_2ISR_pt_tt_pt[icut]->Fill(ISR_tmp.Pt(), (stop1_jets+stop2_jets).Pt(), weight);
-      h_2ISR_pt_ISR_b_MinMass[icut]->Fill(ISR_tmp.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ) , weight);
-      h_2ISR_pt_ISR_b_MaxMass[icut]->Fill(ISR_tmp.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ) , weight);
-      h_2ISR_Met_ISR_b_MinMass[icut]->Fill(dixi.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ), weight);
-      h_2ISR_Met_ISR_b_MaxMass[icut]->Fill(dixi.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ), weight);
     }
   }
 
+  h_ISR_pt_Met[icut]->Fill(distop.Pt(), MET_TLV.Pt(), weight);
+
+  TLorentzVector ISR_reco(0,0,0,0);
+  TLorentzVector ISR_tmp;
+
+  double ISR_b1_mass = (stop1_b+stop1_b).M();
+  double ISR_b2_mass = (stop2_b+stop1_b).M();
+  if ( CalculatePAlongThrust(&stop1_b)   <= -100.0 || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) ISR_reco += stop1_b;
+  ISR_b1_mass = (stop1_b+stop2_b).M();
+  ISR_b2_mass = (stop2_b+stop2_b).M();
+  if ( CalculatePAlongThrust(&stop2_b)   <= -100.0 || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) ISR_reco += stop2_b;
+  ISR_b1_mass = (stop1_b+stop1_wj1).M();
+  ISR_b2_mass = (stop2_b+stop1_wj1).M();
+  if ( CalculatePAlongThrust(&stop1_wj1) <= -100.0 || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) ISR_reco += stop1_wj1;
+  ISR_b1_mass = (stop1_b+stop2_wj1).M();
+  ISR_b2_mass = (stop2_b+stop2_wj1).M();
+  if ( CalculatePAlongThrust(&stop2_wj1) <= -100.0 || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) ISR_reco += stop2_wj1;
+  ISR_b1_mass = (stop1_b+stop1_wj2).M();
+  ISR_b2_mass = (stop2_b+stop1_wj2).M();
+  if ( CalculatePAlongThrust(&stop1_wj2) <= -100.0 || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) ISR_reco += stop1_wj2;
+  ISR_b1_mass = (stop1_b+stop2_wj2).M();
+  ISR_b2_mass = (stop2_b+stop2_wj2).M();
+  if ( CalculatePAlongThrust(&stop2_wj2) <= -100.0 || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) ISR_reco += stop2_wj2;
+
+  for (int i=0; i<nISR; i ++){
+    ISR_tmp.SetPxPyPzE(ISR_p[i][0],ISR_p[i][1],
+		       ISR_p[i][2],ISR_p[i][4]);
+    double ISR_b1_mass = (stop1_b+ISR_tmp).M();
+    double ISR_b2_mass = (stop2_b+ISR_tmp).M();
+    double ISR_PAlongThrust =CalculatePAlongThrust( &ISR_tmp);
+    if (ISR_PAlongThrust < -100. || TMath::Max( ISR_b1_mass, ISR_b2_mass ) > 300. ) {
+      ISR_reco += ISR_tmp;
+    }
+  }
+
+  ISR_b1_mass = (stop1_b+ISR_reco).M();
+  ISR_b2_mass = (stop2_b+ISR_reco).M();
+  double ISR_PAlongThrust =CalculatePAlongThrust( &ISR_reco);
+
+  h_RecoISR_PAlongThrust[icut]->Fill(ISR_PAlongThrust, weight);
+  h_RecoISR_pt_distop_pt[icut]->Fill(ISR_reco.Pt(), distop.Pt(), weight);
+  h_RecoISR_pt_Met[icut]->Fill(distop.Pt(), dixi.Pt(), weight);
+  h_RecoISR_PAlongThrust_Met[icut]->Fill(ISR_PAlongThrust, MET_TLV.Pt(), weight);
+  h_RecoISR_pt_tt_pt[icut]->Fill(ISR_reco.Pt(), (stop1_jets+stop2_jets).Pt(), weight);
+  h_RecoISR_pt_ISR_b_MinMass[icut]->Fill(ISR_reco.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ) , weight);
+  h_RecoISR_pt_ISR_b_MaxMass[icut]->Fill(ISR_reco.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ) , weight);
+  h_RecoISR_Met_ISR_b_MinMass[icut]->Fill(MET_TLV.Pt(), TMath::Min( ISR_b1_mass, ISR_b2_mass ), weight);
+  h_RecoISR_Met_ISR_b_MaxMass[icut]->Fill(MET_TLV.Pt(), TMath::Max( ISR_b1_mass, ISR_b2_mass ), weight);
+  
   if (verbose) std::cout << "Doing Delta phi plot" << std::endl;
-  float deltaPhi = dixi.DeltaPhi(ISR_total);
+  float deltaPhi = MET_TLV.DeltaPhi(ISR_total);
   h_ISR_MET_delphi[icut]->Fill(fabs(deltaPhi), weight);
   if (verbose) std::cout << "Doing Delta R plots" << std::endl;
 
@@ -2445,7 +2655,7 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
   float delr_ISR_w2j2 = ISR_total.DeltaR(stop2_wj2);
   h_delr_ISR_w2j2[icut]->Fill(fabs(delr_ISR_w2j2), weight);
 
-  float delphi_ISR_MET = ISR_total.DeltaPhi(dixi);
+  float delphi_ISR_MET = ISR_total.DeltaPhi(MET_TLV);
   h_delphi_ISR_MET[icut]->Fill(fabs(delphi_ISR_MET), weight);
 
   //-----------------------------------------------------//
@@ -2454,13 +2664,13 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
 
     Ana_AllHad_2b_Thrust_LabFrame2_NegCone_W_minWDeltaM_NMissing[icut]->Fill(0.0, weight);
 
-    double W_Met_DPhi     = fabs((WCand_LabFrame2_MinPThrust+WCand_LabFrame2_MaxPThrust).DeltaPhi(dixi));
-    double W_Met_DPt      = (dixi-WCand_LabFrame2_MaxPThrust-WCand_LabFrame2_MinPThrust).Pt();
+    double W_Met_DPhi     = fabs((WCand_LabFrame2_MinPThrust+WCand_LabFrame2_MaxPThrust).DeltaPhi(MET_TLV));
+    double W_Met_DPt      = (MET_TLV-WCand_LabFrame2_MaxPThrust-WCand_LabFrame2_MinPThrust).Pt();
     double W_Pt           = (WCand_LabFrame2_MaxPThrust+WCand_LabFrame2_MinPThrust).Pt();
 
     double W_PThrust = CalculatePAlongThrust( (WCand_LabFrame2_MinPThrust+WCand_LabFrame2_MaxPThrust).Px(),
 					      (WCand_LabFrame2_MinPThrust+WCand_LabFrame2_MaxPThrust).Py() );
-    double Met_PThrust    = CalculatePAlongThrust( dixi.Pt()*cos(dixi.Phi()),       dixi.Pt()*sin(dixi.Phi()) );
+    double Met_PThrust    = CalculatePAlongThrust( MET_TLV.Pt()*cos(MET_TLV.Phi()),       MET_TLV.Pt()*sin(MET_TLV.Phi()) );
 
     //    double TT_Mass = (TCand_TTFrame2_MinPThrust+TCand_TTFrame2_MaxPThrust).M();
 
@@ -2492,13 +2702,13 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
     double T_PThrust_MinP = CalculatePAlongThrust( TCand_LabFrame2_MinPThrust.Px(), TCand_LabFrame2_MinPThrust.Py() );
 
     // Missing W predicted pt and met value
-    double W_Met_DPhi_MaxP     = fabs(WCand_LabFrame2_MaxPThrust.DeltaPhi(dixi));
-    double W_Met_DPt_MaxP      = (dixi-WCand_LabFrame2_MaxPThrust).Pt();
+    double W_Met_DPhi_MaxP     = fabs(WCand_LabFrame2_MaxPThrust.DeltaPhi(MET_TLV));
+    double W_Met_DPt_MaxP      = (MET_TLV-WCand_LabFrame2_MaxPThrust).Pt();
     double W_Pt_MaxP           = WCand_LabFrame2_MaxPThrust.Pt();
 
     double T_PThrust_MaxP = CalculatePAlongThrust( TCand_LabFrame2_MaxPThrust.Px(), TCand_LabFrame2_MaxPThrust.Py() );
     double W_PThrust_MaxP = CalculatePAlongThrust( WCand_LabFrame2_MaxPThrust.Px(), WCand_LabFrame2_MaxPThrust.Py() );
-    double Met_PThrust    = CalculatePAlongThrust( dixi.Pt()*cos(dixi.Phi()),       dixi.Pt()*sin(dixi.Phi()) );
+    double Met_PThrust    = CalculatePAlongThrust( MET_TLV.Pt()*cos(MET_TLV.Phi()),       MET_TLV.Pt()*sin(MET_TLV.Phi()) );
 
     double TT_Mass = (TCand_TTFrame2_MinPThrust+TCand_TTFrame2_MaxPThrust).M();
 
@@ -2541,13 +2751,13 @@ void TruthxAODAnalysis_STop::plot_signal(int icut, double weight){
     double T_PThrust_MaxP = CalculatePAlongThrust( TCand_LabFrame2_MaxPThrust.Px(), TCand_LabFrame2_MaxPThrust.Py() );
 
     // Missing W predicted pt and met value
-    double W_Met_DPhi_MinP     = fabs(WCand_LabFrame2_MinPThrust.DeltaPhi(dixi));
-    double W_Met_DPt_MinP      = (dixi-WCand_LabFrame2_MinPThrust).Pt();
+    double W_Met_DPhi_MinP     = fabs(WCand_LabFrame2_MinPThrust.DeltaPhi(MET_TLV));
+    double W_Met_DPt_MinP      = (MET_TLV-WCand_LabFrame2_MinPThrust).Pt();
     double W_Pt_MinP           = WCand_LabFrame2_MinPThrust.Pt();
 
     double T_PThrust_MinP = CalculatePAlongThrust( TCand_LabFrame2_MinPThrust.Px(), TCand_LabFrame2_MinPThrust.Py() );
     double W_PThrust_MinP = CalculatePAlongThrust( WCand_LabFrame2_MinPThrust.Px(), WCand_LabFrame2_MinPThrust.Py() );
-    double Met_PThrust    = CalculatePAlongThrust( dixi.Pt()*cos(dixi.Phi()),       dixi.Pt()*sin(dixi.Phi()) );
+    double Met_PThrust    = CalculatePAlongThrust( MET_TLV.Pt()*cos(MET_TLV.Phi()),       MET_TLV.Pt()*sin(MET_TLV.Phi()) );
 
     double TT_Mass = (TCand_TTFrame2_MaxPThrust+TCand_TTFrame2_MinPThrust).M();
 
@@ -2768,7 +2978,9 @@ EL::StatusCode TruthxAODAnalysis_STop :: histFinalize ()
   // that it gets called on all worker nodes regardless of whether
   // they processed input events.
 
-  
+  file_fullME->Close();
+  //  file_pythia->Close();
+
   return EL::StatusCode::SUCCESS;
 }
 

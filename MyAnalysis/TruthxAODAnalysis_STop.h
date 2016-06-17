@@ -32,6 +32,7 @@
 #include <TArrow.h>
 #include <TCanvas.h>
 #include <TLatex.h>
+#include <TFile.h>
 
 #include <vector>
 #include <fstream>
@@ -60,12 +61,26 @@ public:
 
   StopPolarization::PolarizationReweight *polreweight; //!
 
+  TFile *file_fullME; //!
+  TH1F *h_bw_fullME; //!
+
+  TFile *file_pythia; //!
+  TH1F *h_bw_pythia; //!
+
+  TH1F *h_bw_weight; //!
+
   TTree *myTree; //!
   TH1F *h_top_pt; //!
   int m_eventCounter; //!
   int count; //!
   std::string evt_display_name; //!
   TPostScript *ps; //!
+
+  TH1F *h_True_Weight; //!
+  TH1F *h_True_Weight2; //!
+
+  TH2F *h_stop_top_mass_2D_Weighted; //!
+  TH2F *h_stop_top_mass_2D; //!
 
   TH2F *h_TrueBoostDeltaMinP_MagVsAng; //!
   TH1F *h_TrueBoostDeltaMinPAng; //!
@@ -113,6 +128,8 @@ public:
   TH2F *h_stop1_w_jets_pt_eta[7]; //!
   TH2F *h_stop1_w_jets_p_eta[7]; //!
 
+  TH1F *h_stop_decay_mode[7]; //!
+
   TH1F *h_distop_mass[7]; //!
   TH1F *h_distop_pt[7]; //!
   TH1F *h_dixi_mass[7]; //!
@@ -151,6 +168,7 @@ public:
   TH2F *h_stop2_b_thrust2D[7]; //!
   TH1F *h_dixi_pt[7]; //!
   TH1F *h_ISR_MET_delphi[7]; //!
+  TH1F *h_met[7]; //!
 
   TH1F *h_nISR[7]; //!
 
@@ -175,6 +193,8 @@ public:
   TH2F *h_1ISR_Met_ISR_b_MinMass[7]; //!
   TH2F *h_1ISR_Met_ISR_b_MaxMass[7]; //!
 
+  TH2F *h_ISR_pt_Met[7]; //!
+
   TH1F *h_2ISR_totalPt[7]; //!
 
   TH1F *h_2ISR_jetPt[7]; //!
@@ -191,6 +211,17 @@ public:
   TH2F *h_2ISR_pt_ISR_b_MaxMass[7]; //!  
   TH2F *h_2ISR_Met_ISR_b_MinMass[7]; //! 
   TH2F *h_2ISR_Met_ISR_b_MaxMass[7]; //! 
+
+  TH1F *h_RecoISR_Pt[7]; //!
+  TH1F *h_RecoISR_PAlongThrust[7]; //!
+  TH2F *h_RecoISR_pt_distop_pt[7]; //!
+  TH2F *h_RecoISR_pt_Met[7]; //!
+  TH2F *h_RecoISR_PAlongThrust_Met[7]; //!
+  TH2F *h_RecoISR_pt_tt_pt[7]; //!
+  TH2F *h_RecoISR_pt_ISR_b_MinMass[7]; //!
+  TH2F *h_RecoISR_pt_ISR_b_MaxMass[7]; //!
+  TH2F *h_RecoISR_Met_ISR_b_MinMass[7]; //!
+  TH2F *h_RecoISR_Met_ISR_b_MaxMass[7]; //!
 
   TH1F *h_delr_b1_w1[7]; //!
   TH1F *h_delr_stop1_b1[7]; //!
@@ -375,12 +406,14 @@ public:
 
   std::vector <std::vector<float>> ISR_p; //!
 
+  TLorentzVector MET_TLV; //!
+
   bool isMC; //!
   bool verbose; //!
   int nISR; //! 
   double GeV; //!
-  bool isStop1Had; //!
-  bool isStop2Had; //!
+  int isStop1Had; //!
+  int isStop2Had; //!
   bool plotEvent; //!
 
   // this is a standard constructor
@@ -406,16 +439,16 @@ public:
   void FindThrustDir();
   double CalculatePAlongThrust( double px, double py );
   double CalculatePAlongThrust( TLorentzVector *Vec );
-  bool Find_STopDecayProducts( const xAOD::TruthParticle* particle, 
-			       TLorentzVector *Top_tmp,
-			       TLorentzVector *Xi_tmp, TLorentzVector *B_tmp,
-			       TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp );
-  bool Find_TopDecayProducts( const xAOD::TruthParticle* particle,
-			      TLorentzVector *B_tmp,
+  int Find_STopDecayProducts( const xAOD::TruthParticle* particle, 
+			      TLorentzVector *Top_tmp,
+			      TLorentzVector *Xi_tmp, TLorentzVector *B_tmp,
 			      TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp );
-
-  bool Find_WDecayProducts( const xAOD::TruthParticle* particle, 
-			    TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp );
+  int Find_TopDecayProducts( const xAOD::TruthParticle* particle,
+			     TLorentzVector *B_tmp,
+			     TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp );
+  
+  int Find_WDecayProducts( const xAOD::TruthParticle* particle, 
+			   TLorentzVector *WJ1_tmp, TLorentzVector *WJ2_tmp );
 
   // this is needed to distribute the algorithm to the workers
   ClassDef(TruthxAODAnalysis_STop, 1);

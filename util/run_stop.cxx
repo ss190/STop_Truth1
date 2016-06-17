@@ -13,7 +13,7 @@
 using namespace MyAnalysis_STop;
 
 int main( int argc, char* argv[] ) {
-        
+         
   int nEvt = -1;
   std::string input;
   std::string output="output";
@@ -58,7 +58,7 @@ int main( int argc, char* argv[] ) {
   if ( nEvt > 0 ) {
     job.options()->setDouble (EL::Job::optMaxEvents, nEvt);
   }
- 
+  
   // Add our analysis to the job:
   TruthxAODAnalysis_STop* alg = new TruthxAODAnalysis_STop();
   alg->SetVerbose(verbose);
